@@ -1,5 +1,3 @@
-## ALARMA PARA AVISAR DE LOS PROCESOS EN CRM, QUE ESTAN APUNTO DE CADUCAR##
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -76,7 +74,7 @@
     margin-top: 10px;
   }
 
-  /* --- Selector de casa (si no viene por URL) --- */
+  /* --- Selector de casa --- */
   .house-picker{
     margin-top:16px;
     display:grid;
@@ -98,6 +96,55 @@
     background: var(--forest);
     color: var(--paper);
     border-color: var(--forest);
+  }
+
+  /* --- Navegador de fecha (calendario) --- */
+  .date-nav{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(238,240,232,0.1);
+    border-radius:12px;
+    padding:6px;
+  }
+  .date-nav button.arrow{
+    flex:none;
+    width:34px; height:34px;
+    border-radius:9px;
+    border:none;
+    background: rgba(238,240,232,0.14);
+    color: var(--paper);
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .date-nav button.arrow:disabled{ opacity:0.3; cursor:default; }
+  .date-nav .date-display{
+    flex:1;
+    position:relative;
+    text-align:center;
+  }
+  .date-nav .date-display label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color: var(--paper);
+    cursor:pointer;
+  }
+  .date-nav input[type="date"]{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+  }
+  .today-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    background: var(--ochre);
+    color: var(--forest-deep);
+    padding:2px 8px;
+    border-radius:999px;
+    margin-left:6px;
   }
 
   /* --- Selector Apertura / Cierre --- */
@@ -210,6 +257,78 @@
   .save-btn:disabled{ opacity:0.4; }
   .save-btn.saved{ background: var(--ochre); color: var(--forest-deep); }
 
+  /* --- Observaciones --- */
+  .obs-section{ margin-top: 30px; }
+  .obs-section h2{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    margin:0 0 4px;
+  }
+  .obs-section .sub{
+    font-size:12.5px;
+    color: rgba(32,40,31,0.55);
+    margin: 0 0 12px;
+  }
+  .obs-form{
+    background:white;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+  }
+  .obs-form textarea{
+    width:100%;
+    min-height:70px;
+    border:none;
+    resize:vertical;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    outline:none;
+    background:transparent;
+    line-height:1.4;
+  }
+  .obs-form .obs-row{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+  }
+  .obs-form input[type="text"]{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 11px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+  }
+  .obs-form button{
+    flex:none;
+    padding:9px 16px;
+    border:none;
+    border-radius:10px;
+    background: var(--ochre);
+    color: var(--forest-deep);
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .obs-form button:disabled{ opacity:0.4; }
+  .obs-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .obs-item{
+    background:white;
+    border:1px solid var(--line);
+    border-left: 4px solid var(--clay);
+    border-radius:10px;
+    padding:11px 13px;
+  }
+  .obs-item .obs-meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: rgba(32,40,31,0.5);
+    margin-bottom:4px;
+  }
+  .obs-item .obs-text{ font-size:14px; line-height:1.4; }
+  .obs-empty{ font-size:13px; color: rgba(32,40,31,0.5); padding: 6px 2px; }
+
   /* --- Historial --- */
   .history{ margin-top: 30px; }
   .history h2{
@@ -267,8 +386,15 @@
   <div class="tag">
     <p class="eyebrow">BarcelonActua · Bacstation</p>
     <h1 id="houseTitle">Casa</h1>
-    <p class="meta" id="dateLine">—</p>
     <div class="house-picker" id="housePicker"></div>
+    <div class="date-nav">
+      <button class="arrow" id="prevDay">‹</button>
+      <div class="date-display">
+        <label id="dateLabel" for="datePicker">—</label>
+        <input type="date" id="datePicker">
+      </div>
+      <button class="arrow" id="nextDay">›</button>
+    </div>
   </div>
 
   <div class="turno-toggle" id="turnoToggle">
@@ -288,7 +414,20 @@
     <input id="nameInput" type="text" placeholder="Nombre y apellido">
   </div>
 
-  <button class="save-btn" id="saveBtn">Guardar registro de hoy</button>
+  <button class="save-btn" id="saveBtn">Guardar registro de este día</button>
+
+  <div class="obs-section">
+    <h2>Observaciones</h2>
+    <p class="sub">Notas del día para esta casa: incidencias, seguimiento, avisos para el próximo turno.</p>
+    <div class="obs-form">
+      <textarea id="obsText" placeholder="Escribe una observación..."></textarea>
+      <div class="obs-row">
+        <input type="text" id="obsName" placeholder="Nombre">
+        <button id="obsAddBtn">Añadir</button>
+      </div>
+    </div>
+    <div class="obs-list" id="obsList"></div>
+  </div>
 
   <div class="history">
     <h2>Últimos registros de esta casa</h2>
@@ -331,10 +470,18 @@ let currentHouse = params.get('casa') && HOUSES.some(h => h.id === params.get('c
   ? params.get('casa')
   : (localStorage.getItem('bac_last_house') || HOUSES[0].id);
 let currentTurno = 'apertura';
+let selectedDate = todayKey();
 
-const todayKey = () => new Date().toISOString().slice(0,10);
+function todayKey(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+function isToday(dateStr){ return dateStr === todayKey(); }
+
 const storageKey = (house, turno, date) => `bacchecklist_${house}_${turno}_${date}`;
 const historyKey = (house) => `bacchecklist_history_${house}`;
+const obsKey = (house, date) => `bacobs_${house}_${date}`;
 
 function renderHousePicker(){
   const el = document.getElementById('housePicker');
@@ -350,21 +497,43 @@ function renderHousePicker(){
   document.getElementById('houseTitle').textContent = houseObj ? houseObj.label : 'Casa';
 }
 
-function renderDate(){
-  const d = new Date();
+function renderDateNav(){
+  const d = new Date(selectedDate + 'T00:00:00');
   const opts = { weekday: 'long', day: 'numeric', month: 'long' };
-  const str = d.toLocaleDateString('es-ES', opts);
-  document.getElementById('dateLine').textContent = str.charAt(0).toUpperCase() + str.slice(1);
+  let str = d.toLocaleDateString('es-ES', opts);
+  str = str.charAt(0).toUpperCase() + str.slice(1);
+  const label = document.getElementById('dateLabel');
+  label.innerHTML = str + (isToday(selectedDate) ? ' <span class="today-pill">HOY</span>' : '');
+  document.getElementById('datePicker').value = selectedDate;
+  document.getElementById('nextDay').disabled = isToday(selectedDate);
 }
 
+function shiftDate(days){
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  const next = d.toISOString().slice(0,10);
+  if(next > todayKey()) return;
+  selectedDate = next;
+  refreshAll();
+}
+
+document.getElementById('prevDay').addEventListener('click', () => shiftDate(-1));
+document.getElementById('nextDay').addEventListener('click', () => shiftDate(1));
+document.getElementById('datePicker').addEventListener('change', (e) => {
+  const val = e.target.value;
+  if(!val) return;
+  selectedDate = val > todayKey() ? todayKey() : val;
+  refreshAll();
+});
+
 function getState(){
-  const raw = localStorage.getItem(storageKey(currentHouse, currentTurno, todayKey()));
+  const raw = localStorage.getItem(storageKey(currentHouse, currentTurno, selectedDate));
   if(raw) return JSON.parse(raw);
   return { items: CHECKLISTS[currentTurno].map(() => false), name: '' };
 }
 
 function saveState(state){
-  localStorage.setItem(storageKey(currentHouse, currentTurno, todayKey()), JSON.stringify(state));
+  localStorage.setItem(storageKey(currentHouse, currentTurno, selectedDate), JSON.stringify(state));
 }
 
 function renderList(){
@@ -406,6 +575,84 @@ function renderTurnoToggle(){
   });
 }
 
+document.getElementById('turnoToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-turno]');
+  if(!btn) return;
+  currentTurno = btn.dataset.turno;
+  renderTurnoToggle();
+  renderList();
+  renderProgress();
+});
+
+document.getElementById('nameInput').addEventListener('input', (e) => {
+  const s = getState();
+  s.name = e.target.value;
+  saveState(s);
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const state = getState();
+  const total = state.items.length;
+  const done = state.items.filter(Boolean).length;
+  const raw = localStorage.getItem(historyKey(currentHouse));
+  const hist = raw ? JSON.parse(raw) : [];
+  hist.unshift({
+    date: selectedDate,
+    turno: currentTurno,
+    name: state.name || '',
+    done, total,
+    time: new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' })
+  });
+  localStorage.setItem(historyKey(currentHouse), JSON.stringify(hist.slice(0,80)));
+  renderHistory();
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Registro guardado ✓';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = 'Guardar registro de este día'; btn.classList.remove('saved'); }, 1800);
+});
+
+/* ---------- Observaciones ---------- */
+function getObs(){
+  const raw = localStorage.getItem(obsKey(currentHouse, selectedDate));
+  return raw ? JSON.parse(raw) : [];
+}
+
+function renderObs(){
+  const list = getObs();
+  const el = document.getElementById('obsList');
+  el.innerHTML = '';
+  if(list.length === 0){
+    el.innerHTML = '<p class="obs-empty">Sin observaciones para este día.</p>';
+    return;
+  }
+  list.forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'obs-item';
+    div.innerHTML = `
+      <div class="obs-meta">${entry.time} · ${entry.name || 'Sin nombre'}</div>
+      <div class="obs-text">${entry.text}</div>
+    `;
+    el.appendChild(div);
+  });
+}
+
+document.getElementById('obsAddBtn').addEventListener('click', () => {
+  const textEl = document.getElementById('obsText');
+  const nameEl = document.getElementById('obsName');
+  const text = textEl.value.trim();
+  if(!text) return;
+  const list = getObs();
+  list.unshift({
+    text,
+    name: nameEl.value.trim(),
+    time: new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' })
+  });
+  localStorage.setItem(obsKey(currentHouse, selectedDate), JSON.stringify(list));
+  textEl.value = '';
+  renderObs();
+});
+
+/* ---------- Historial ---------- */
 function renderHistory(){
   const raw = localStorage.getItem(historyKey(currentHouse));
   const hist = raw ? JSON.parse(raw) : [];
@@ -429,46 +676,14 @@ function renderHistory(){
   });
 }
 
-document.getElementById('turnoToggle').addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-turno]');
-  if(!btn) return;
-  currentTurno = btn.dataset.turno;
-  renderTurnoToggle();
-  renderList();
-  renderProgress();
-});
-
-document.getElementById('nameInput').addEventListener('input', (e) => {
-  const s = getState();
-  s.name = e.target.value;
-  saveState(s);
-});
-
-document.getElementById('saveBtn').addEventListener('click', () => {
-  const state = getState();
-  const total = state.items.length;
-  const done = state.items.filter(Boolean).length;
-  const raw = localStorage.getItem(historyKey(currentHouse));
-  const hist = raw ? JSON.parse(raw) : [];
-  hist.unshift({
-    date: todayKey(),
-    turno: currentTurno,
-    name: state.name || '',
-    done, total,
-    time: new Date().toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' })
-  });
-  localStorage.setItem(historyKey(currentHouse), JSON.stringify(hist.slice(0,50)));
-  renderHistory();
-  const btn = document.getElementById('saveBtn');
-  btn.textContent = 'Registro guardado ✓';
-  btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Guardar registro de hoy'; btn.classList.remove('saved'); }, 1800);
-});
-
 document.getElementById('exportBtn').addEventListener('click', () => {
   const raw = localStorage.getItem(historyKey(currentHouse));
   const hist = raw ? JSON.parse(raw) : [];
-  const blob = new Blob([JSON.stringify(hist, null, 2)], { type: 'application/json' });
+  const allObsKeys = Object.keys(localStorage).filter(k => k.startsWith(`bacobs_${currentHouse}_`));
+  const observaciones = {};
+  allObsKeys.forEach(k => { observaciones[k.replace(`bacobs_${currentHouse}_`,'')] = JSON.parse(localStorage.getItem(k)); });
+  const payload = { checklists: hist, observaciones };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -479,10 +694,11 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
 function refreshAll(){
   renderHousePicker();
-  renderDate();
+  renderDateNav();
   renderTurnoToggle();
   renderList();
   renderProgress();
+  renderObs();
   renderHistory();
 }
 
