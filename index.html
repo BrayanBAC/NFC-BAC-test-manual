@@ -1,51 +1,39 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pasar asistencia</title>
+<base target="_top">
 <style>
 :root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ddd;--ok:#2e7d32;--ko:#c62828;--ju:#ef6c00}
 @media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#aaa;--line:#333}}
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--fg);margin:auto;padding:12px;max-width:620px}
 h1{font-size:20px}input,button{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.row>*{flex:1;min-width:110px}
+.row{display:flex;gap:8px;margin:6px 0}.row>*{flex:1}
 .al{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
 .al .n{flex:2}.al small{color:var(--mut)}.b{flex:0 0 auto;padding:6px 9px}
 .A{background:var(--ok);color:#fff}.F{background:var(--ko);color:#fff}.J{background:var(--ju);color:#fff}
 .mut{color:var(--mut);font-size:13px}
 </style></head><body>
 <h1>Pasar asistencia</h1>
-<div class="row">
-  <input id="id" placeholder="Código de clase (ej. 14150)" inputmode="numeric">
-  <input id="clave" type="password" placeholder="Clave">
-</div>
+<div class="row"><input id="id" placeholder="Código de clase (ej. 14150)" inputmode="numeric"></div>
 <button onclick="cargar()" style="width:100%">Cargar lista</button>
 <p id="msg" class="mut"></p>
 <div id="lista"></div>
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyCAHtfjun-P_sOCmLQD2SrTOBB1bVISmzhqQ1N78dJjRl9eFYY3MxofIdHbMYKFc4KQQ/exec";
 const $ = i => document.getElementById(i);
 let lista = [];
-$("clave").value = localStorage.getItem("clave") || "";
 const msg = t => $("msg").textContent = t;
-async function cargar(){
-  localStorage.setItem("clave", $("clave").value);
+const fallo = e => msg("Error: " + (e.message || e));
+function cargar(){
   msg("Cargando…");
-  try{
-    const q = new URLSearchParams({id:$("id").value.trim(), clave:$("clave").value});
-    const r = await (await fetch(API + "?" + q)).json();
-    if(r.error) return msg(r.error);
-    lista = r.alumnos; msg(lista.length ? "" : "No hay alumnos con ese código."); draw();
-  }catch(e){ msg("No se pudo conectar. Revisa la URL y la conexión."); }
+  google.script.run.withFailureHandler(fallo).withSuccessHandler(r => {
+    lista = r; msg(lista.length ? "" : "No hay alumnos con ese código."); draw();
+  }).cargar($("id").value.trim());
 }
-async function marcar(i, v){
+function marcar(i, v){
   const a = lista[i], nuevo = a.asistencia === v ? "" : v;
   msg("Guardando…");
-  try{
-    const r = await (await fetch(API, {method:"POST", body: JSON.stringify(
-      {id:$("id").value.trim(), row:a.row, valor:nuevo, clave:$("clave").value})})).json();
-    if(r.error) return msg(r.error);
+  google.script.run.withFailureHandler(fallo).withSuccessHandler(() => {
     a.asistencia = nuevo; msg(""); draw();
-  }catch(e){ msg("No se guardó. Inténtalo otra vez."); }
+  }).marcar($("id").value.trim(), a.row, nuevo);
 }
 function draw(){
   $("lista").innerHTML = lista.map((a,i) =>
