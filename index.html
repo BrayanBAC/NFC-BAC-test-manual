@@ -16,14 +16,13 @@ h1{font-size:20px}input,button{font:inherit;padding:8px;border:1px solid var(--l
 <h1>Pasar asistencia</h1>
 <div class="row">
   <input id="id" placeholder="Código de clase (ej. 14150)" inputmode="numeric">
-  <input id="nivel" placeholder="Nivel (A1, A2…)">
   <input id="clave" type="password" placeholder="Clave">
 </div>
 <button onclick="cargar()" style="width:100%">Cargar lista</button>
 <p id="msg" class="mut"></p>
 <div id="lista"></div>
 <script>
-const API = "https://script.google.com/a/macros/barcelonactua.org/s/AKfycbxRpiz6VS9QXpqsqBNWkpGOOsFLsaHDkE6HRUd5ElbFHQnYTv_K0FF4Hu1yKtC-_TYmkA/exec";
+const API = "PEGA_AQUI_LA_URL_DE_APPS_SCRIPT";
 const $ = i => document.getElementById(i);
 let lista = [];
 $("clave").value = localStorage.getItem("clave") || "";
@@ -32,10 +31,10 @@ async function cargar(){
   localStorage.setItem("clave", $("clave").value);
   msg("Cargando…");
   try{
-    const q = new URLSearchParams({id:$("id").value.trim(), nivel:$("nivel").value.trim(), clave:$("clave").value});
+    const q = new URLSearchParams({id:$("id").value.trim(), clave:$("clave").value});
     const r = await (await fetch(API + "?" + q)).json();
     if(r.error) return msg(r.error);
-    lista = r.alumnos; msg(lista.length ? "" : "No hay alumnos con ese código y nivel."); draw();
+    lista = r.alumnos; msg(lista.length ? "" : "No hay alumnos con ese código."); draw();
   }catch(e){ msg("No se pudo conectar. Revisa la URL y la conexión."); }
 }
 async function marcar(i, v){
@@ -55,7 +54,8 @@ function draw(){
       `<button class="b ${a.asistencia===v?c:""}" onclick="marcar(${i},'${v}')">${t}</button>`).join("") + `</div>`).join("");
   document.querySelectorAll(".n").forEach((el,i) => {
     el.textContent = lista[i].nombre;
-    if(lista[i].cate==="V"){ const s=document.createElement("small"); s.textContent=" (voluntario)"; el.appendChild(s); }
+    const t = lista[i].cate==="V" ? "voluntario" : lista[i].nivel;
+    if(t){ const s=document.createElement("small"); s.textContent=" ("+t+")"; el.appendChild(s); }
   });
 }
 </script></body></html>
